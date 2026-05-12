@@ -82,20 +82,6 @@ def get_discounted_price(product):
 with app.app_context():
     db.create_all()
     
-    # Создаем админа если нет
-    if not User.query.filter_by(username='admin').first():
-        admin = User(
-            username='admin',
-            email='admin@flowershop.ru',
-            password=bcrypt.generate_password_hash('admin123').decode('utf-8'),
-            is_admin=True,
-            full_name='Администратор',
-            phone='+7 (999) 123-45-67',
-            bio='Я создатель этого цветочного магазина'
-        )
-        db.session.add(admin)
-        print("👑 Создан администратор: admin / admin123")
-    
     # Создаем тестового пользователя если нет
     if not User.query.filter_by(username='user').first():
         user = User(
@@ -127,7 +113,6 @@ with app.app_context():
     
     print("=" * 50)
     print("✅ База данных готова!")
-    print("👑 Админ: admin / admin123")
     print("👤 Пользователь: user / user123")
     print("=" * 50)
 
@@ -178,7 +163,7 @@ def login():
             session['username'] = user.username
             session['is_admin'] = user.is_admin
             flash(f'С возвращением, {username}!', 'success')
-            return redirect(url_for('admin_panel' if user.is_admin else 'index'))
+            return redirect(url_for('index'))  # Всегда на главную, даже если админ
         else:
             flash('Неверное имя пользователя или пароль', 'danger')
     
@@ -342,127 +327,6 @@ def checkout():
     
     flash(f'Заказ успешно оформлен! Сумма: {total:.2f} ₽', 'success')
     return redirect(url_for('account'))
-
-# ==================== АДМИН ПАНЕЛЬ ====================
-
-@app.route('/admin')
-def admin_panel():
-    if not session.get('is_admin'):
-        flash('Доступ запрещен. Только для администраторов.', 'danger')
-        return redirect(url_for('index'))
-    
-    products = Product.query.all()
-    orders = Order.query.order_by(Order.created_at.desc()).all()
-    users = User.query.all()
-    
-    return render_template('admin.html', products=products, orders=orders, users=users)
-
-@app.route('/admin/add_product', methods=['GET', 'POST'])
-def add_product():
-    if not session.get('is_admin'):
-        flash('Доступ запрещен', 'danger')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        price = float(request.form['price'])
-        stock = int(request.form['stock'])
-        category = request.form.get('category', 'flowers')
-        discount = int(request.form.get('discount', 0))
-        
-        image_file = 'default.jpg'
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-                filename = timestamp + filename
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                image_file = filename
-        
-        product = Product(
-            name=name,
-            description=description,
-            price=price,
-            stock=stock,
-            category=category,
-            discount=discount,
-            image=image_file
-        )
-        
-        db.session.add(product)
-        db.session.commit()
-        flash('Товар успешно добавлен!', 'success')
-        return redirect(url_for('admin_panel'))
-    
-    return render_template('add_product.html')
-
-@app.route('/admin/edit_product/<int:id>', methods=['GET', 'POST'])
-def edit_product(id):
-    if not session.get('is_admin'):
-        flash('Доступ запрещен', 'danger')
-        return redirect(url_for('index'))
-    
-    product = Product.query.get_or_404(id)
-    
-    if request.method == 'POST':
-        product.name = request.form['name']
-        product.description = request.form['description']
-        product.price = float(request.form['price'])
-        product.stock = int(request.form['stock'])
-        product.category = request.form.get('category', 'flowers')
-        product.discount = int(request.form.get('discount', 0))
-        
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and allowed_file(file.filename):
-                if product.image != 'default.jpg':
-                    old_path = os.path.join(app.config['UPLOAD_FOLDER'], product.image)
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-                
-                filename = secure_filename(file.filename)
-                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
-                filename = timestamp + filename
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                product.image = filename
-        
-        db.session.commit()
-        flash('Товар успешно обновлен!', 'success')
-        return redirect(url_for('admin_panel'))
-    
-    return render_template('edit_product.html', product=product)
-
-@app.route('/admin/delete_product/<int:id>')
-def delete_product(id):
-    if not session.get('is_admin'):
-        flash('Доступ запрещен', 'danger')
-        return redirect(url_for('index'))
-    
-    product = Product.query.get_or_404(id)
-    
-    if product.image != 'default.jpg':
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], product.image)
-        if os.path.exists(image_path):
-            os.remove(image_path)
-    
-    db.session.delete(product)
-    db.session.commit()
-    flash('Товар успешно удален!', 'success')
-    return redirect(url_for('admin_panel'))
-
-@app.route('/admin/update_order_status/<int:id>', methods=['POST'])
-def update_order_status(id):
-    if not session.get('is_admin'):
-        flash('Доступ запрещен', 'danger')
-        return redirect(url_for('index'))
-    
-    order = Order.query.get_or_404(id)
-    order.status = request.form['status']
-    db.session.commit()
-    flash('Статус заказа обновлен!', 'success')
-    return redirect(url_for('admin_panel'))
 
 if __name__ == '__main__':
     app.run(debug=True)

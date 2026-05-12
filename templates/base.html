@@ -127,7 +127,6 @@
                             </a>
                         </li>
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('account') }}">👤 {{ session.username }}</a></li>
-                        {% if session.is_admin %}<li class="nav-item"><a class="nav-link" href="{{ url_for('admin_panel') }}">👑 Админ панель</a></li>{% endif %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">🚪 Выйти</a></li>
                     {% else %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">🔑 Войти</a></li>
