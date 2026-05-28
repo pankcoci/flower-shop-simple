@@ -25,8 +25,13 @@ git clone https://github.com/pankcoci/flower-shop-simple.git
 cd flower-shop-simple
 pip install flask flask-sqlalchemy flask-bcrypt
 python app.py
-Скриншоты
-*<вставь 2-3 скриншота: главная страница, корзина, личный кабинет>*
+```
+
+**Скриншоты**
+
+<img width="698" height="379" alt="image" src="https://github.com/user-attachments/assets/165853e4-e5f8-4f3d-bb36-42eb299142dc" />
+<img width="700" height="383" alt="image" src="https://github.com/user-attachments/assets/62a05712-92bc-4fcb-a8d3-c64bd52eb35d" />
+<img width="808" height="447" alt="image" src="https://github.com/user-attachments/assets/d14ed6c2-c84b-4b3f-8f2b-90476d00f28d" />
 
 Автор
 Соловьева Татьяна, ИСП34-9
